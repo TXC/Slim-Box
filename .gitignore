@@ -1,0 +1,15 @@
+.idea/
+.vscode/
+/coverage/
+/vendor/
+/logs/*
+!/logs/README.md
+/var/
+/node_modules/
+/public/assets
+/k8s/**/*secrets.yml
+/i18n/**/*.mo
+.phpunit.result.cache
+coverage.*.xml
+.env
+composer.lock

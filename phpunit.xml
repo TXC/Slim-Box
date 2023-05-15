@@ -1,0 +1,32 @@
+<?xml version="1.0"?>
+<phpunit
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/10.1/phpunit.xsd"
+    beStrictAboutChangesToGlobalState="true"
+    beStrictAboutOutputDuringTests="true"
+    colors="true"
+    defaultTestSuite="unit"
+    cacheDirectory=".phpunit.cache"
+    bootstrap="tests/bootstrap.php"
+>
+    <coverage>
+        <report>
+            <clover outputFile="coverage.clover.xml"/>
+            <cobertura outputFile="coverage.cobertura.xml"/>
+        </report>
+    </coverage>
+    <testsuites>
+        <testsuite name="Test Suite">
+            <directory>./tests/</directory>
+        </testsuite>
+    </testsuites>
+    <php>
+        <env name="APP_ENV" value="testing"/>
+        <env name="PHPUNIT_TEST_SUITE" value="1"/>
+    </php>
+    <source>
+        <include>
+            <directory>src</directory>
+        </include>
+    </source>
+</phpunit>
