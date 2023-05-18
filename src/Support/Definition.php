@@ -6,46 +6,35 @@ namespace TXC\Box\Support;
 
 use TXC\Box\Console\ConsoleCommandContainer;
 use TXC\Box\Controller\RoutesContainer;
+use TXC\Box\Domain\DomainContainer;
 use TXC\Box\Environment\Environment;
 use TXC\Box\Environment\Settings;
+use TXC\Box\Interface\DomainInterface;
 use TXC\Box\Interface\RepositoryInterface;
 use TXC\Box\Repository\RepositoryContainer;
 use Composer\InstalledVersions;
-use DI\Bridge\Slim\CallableResolver;
 use DI\Factory\RequestedEntry;
-use Doctrine\DBAL\Connection;
-use Doctrine\DBAL\DriverManager;
-use Doctrine\DBAL\Tools\Console\ConnectionProvider;
-use Doctrine\DBAL\Types\Type;
+use Doctrine\DBAL;
 use Doctrine\Migrations\Configuration as MigrationConfiguration;
 use Doctrine\Migrations\DependencyFactory;
-use Doctrine\ORM\Configuration;
-use Doctrine\ORM\EntityManager;
-use Doctrine\ORM\EntityManagerInterface;
-use Doctrine\ORM\ORMSetup;
-use Doctrine\ORM\Tools\Console\EntityManagerProvider;
-use Doctrine\ORM\Tools\Console\EntityManagerProvider\SingleManagerProvider;
-use Dotenv\Dotenv;
-use Invoker\CallableResolver as InvokerCallableResolver;
+use Doctrine\ORM;
+use Doctrine\ORM\Tools\Console as ORMConsole;
 use Monolog\Handler\StreamHandler;
 use Monolog\Logger;
 use Psr\Container\ContainerInterface;
-use Psr\Http\Message\ResponseFactoryInterface;
 use Psr\Http\Message\ServerRequestFactoryInterface;
 use Psr\Log\LoggerInterface;
-use Slim\Interfaces\CallableResolverInterface;
-use Slim\Interfaces\RouteCollectorProxyInterface;
 use TXC\Box\Interface\RestInterface;
 use Slim\Psr7\Factory\ServerRequestFactory;
-use Slim\Routing\RouteCollector;
 use Symfony\Component\Cache\Adapter\ArrayAdapter;
 use Symfony\Component\Cache\Adapter\FilesystemAdapter;
 use Symfony\Component\Console\Application;
+
 use function DI\get;
 
 class Definition
 {
-    public static function collect()
+    public static function collect(): array
     {
         $packages = [];
         if (InstalledVersions::isInstalled('monolog/monolog')) {
@@ -71,10 +60,12 @@ class Definition
     {
         return [
             Logger::class => function (Settings $settings): Logger {
-                $logger = new Logger($settings->get('logger.prefix'));
+                $name = $settings->get('logger.prefix');
+
+                $logger = new Logger($name);
 
                 $fileHandler = new StreamHandler(
-                    $settings->get('logger.path'),
+                    $settings->get('logger.path') . '/' . $name . '.log',
                     $settings->get('logger.level')
                 );
 
@@ -90,14 +81,14 @@ class Definition
     protected static function addDoctrineOrm(): array
     {
         return [
-            Configuration::class => function (Settings $settings, Logger $logger): Configuration {
+            ORM\Configuration::class => function (Settings $settings, Logger $logger): ORM\Configuration {
                 // Use the ArrayAdapter or the FilesystemAdapter depending on the value of the 'dev_mode' setting
                 // You can substitute the FilesystemAdapter for any other cache you prefer from the cache library
                 $cache = $settings->get('doctrine.dev_mode') ?
                     new ArrayAdapter() :
                     new FilesystemAdapter(directory: $settings->get('doctrine.cache_dir'));
 
-                $configuration = ORMSetup::createAttributeMetadataConfiguration(
+                $configuration = ORM\ORMSetup::createAttributeMetadataConfiguration(
                     $settings->get('doctrine.metadata_dirs'),
                     $settings->get('doctrine.dev_mode'),
                     '',
@@ -106,26 +97,38 @@ class Definition
 
                 $middlewares = [];
                 if ($settings->get('doctrine.dev_mode') === true) {
-                    $middlewares[] = new \Doctrine\DBAL\Logging\Middleware($logger);
+                    $name = 'doctrine';
+                    $dbalLogger = $logger->withName($name);
+                    $fileHandler = new StreamHandler(
+                        $settings->get('logger.path') . '/' . $name . '.log',
+                        $settings->get('logger.level')
+                    );
+                    $dbalLogger->pushHandler($fileHandler);
+                    $middlewares[] = new DBAL\Logging\Middleware($dbalLogger);
                 }
                 $configuration->setMiddlewares($middlewares);
 
-                $configuration->setNamingStrategy(new \Doctrine\ORM\Mapping\UnderscoreNamingStrategy(CASE_LOWER, true));
+                $configuration->setNamingStrategy(new ORM\Mapping\UnderscoreNamingStrategy(CASE_LOWER, true));
                 return $configuration;
             },
-            EntityManager::class => function (Connection $connection, Configuration $configuration): EntityManager {
+            ORM\EntityManager::class => function (
+                DBAL\Connection $connection,
+                ORM\Configuration $configuration
+            ): ORM\EntityManager {
                 if (
                     InstalledVersions::isInstalled('darsyn/ip')
                     && class_exists(\Darsyn\IP\Doctrine\MultiType::class)
                 ) {
-                    Type::addType('ip', \Darsyn\IP\Doctrine\MultiType::class);
+                    DBAL\Types\Type::addType('ip', \Darsyn\IP\Doctrine\MultiType::class);
                 }
 
-                return new EntityManager($connection, $configuration);
+                return new ORM\EntityManager($connection, $configuration);
             },
-            EntityManagerInterface::class => \DI\get(EntityManager::class),
-            EntityManagerProvider::class => function (EntityManager $entityManager): SingleManagerProvider {
-                return new SingleManagerProvider($entityManager);
+            ORM\EntityManagerInterface::class => \DI\get(ORM\EntityManager::class),
+            ORMConsole\EntityManagerProvider::class => function (
+                ORM\EntityManager $entityManager
+            ): ORMConsole\EntityManagerProvider\SingleManagerProvider {
+                return new ORMConsole\EntityManagerProvider\SingleManagerProvider($entityManager);
             },
         ];
     }
@@ -133,14 +136,19 @@ class Definition
     protected static function addDoctrineDbal(): array
     {
         return [
-            Connection::class => function (Settings $settings, Configuration $configuration): Connection {
-                return DriverManager::getConnection(
+            DBAL\Connection::class => function (
+                Settings $settings,
+                ORM\Configuration $configuration
+            ): DBAL\Connection {
+                return DBAL\DriverManager::getConnection(
                     $settings->get('doctrine.connection'),
                     $configuration
                 );
             },
-            ConnectionProvider::class => function (EntityManagerProvider $entityManagerProvider) {
-                return new EntityManagerProvider\ConnectionFromManagerProvider($entityManagerProvider);
+            DBAL\Tools\Console\ConnectionProvider::class => function (
+                ORMConsole\EntityManagerProvider $entityManagerProvider
+            ) {
+                return new ORMConsole\EntityManagerProvider\ConnectionFromManagerProvider($entityManagerProvider);
             },
         ];
     }
@@ -148,7 +156,10 @@ class Definition
     protected static function addDoctrineMigrations(): array
     {
         return [
-            DependencyFactory::class => function (Settings $settings, EntityManager $entityManager) {
+            DependencyFactory::class => function (
+                Settings $settings,
+                ORM\EntityManager $entityManager
+            ): DependencyFactory {
                 return DependencyFactory::fromEntityManager(
                     new MigrationConfiguration\Migration\ConfigurationArray($settings->get('doctrine.migrations')),
                     new MigrationConfiguration\EntityManager\ExistingEntityManager($entityManager)
@@ -177,7 +188,9 @@ class Definition
                 return Environment::from($_ENV['ENVIRONMENT']);
             },
             // Settings.
-            Settings::class => \DI\factory([Settings::class, 'load']),
+            Settings::class => function (): Settings {
+                return Settings::load();
+            },
             ContainerInterface::class => \DI\get(\DI\Container::class),
 /*
             CallableResolverInterface::class => function (ContainerInterface $container) {
@@ -195,22 +208,16 @@ class Definition
                 return new RouteCollector($responseFactory, $callableResolver, $container);
             },
 */
-            /*
-            Guard::class => function (EntityManagerInterface $entityManager, Settings $settings) {
-                $storage = new \App\Application\Handlers\CsrfHandler($entityManager);
-                return new Guard(
-                    $app->getResponseFactory(),
-                    $settings->get('csrf.prefix'),
-                    $storage,
-                    function (ServerRequestInterface $request) {
-                        throw new \App\Domain\Securekey\SecurekeyInvalidCSRFException($request);
-                    }
-                );
+            DomainInterface::class => function (DomainContainer $domainContainer, RequestedEntry $entry) {
+                $name = $entry->getName();
+                $domain = $domainContainer->getDomain($name);
+                return $domain;
             },
-            */
-            RepositoryInterface::class => function (RepositoryContainer $repositoryContainer, RequestedEntry $entry) {
-                return $repositoryContainer->getEntity($entry->getName());
-            },
+            //RepositoryInterface::class => function (RepositoryContainer $repositoryContainer, RequestedEntry $entry) {
+            //    $name = $entry->getName();
+            //    $repository = $repositoryContainer->getRepository($name);
+            //    return $repository;
+            //},
             RestInterface::class => function (RoutesContainer $routesContainer, RequestedEntry $entry) {
                 return $routesContainer->getRoute($entry->getName());
             },

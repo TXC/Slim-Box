@@ -15,11 +15,12 @@ class MiddlewareCompilerPass implements CompilerPass
 {
     public function process(ContainerBuilder $container): void
     {
-        if (!is_dir(Settings::getAppRoot() . 'src/Application/Middleware')) {
+        return;
+        if (!is_dir(Settings::getAppRoot() . '/src/Application/Middleware')) {
             return;
         }
         $definition = $container->findDefinition(MiddlewareContainer::class);
-        $classes = $container->findClassesThatImplements(MiddlewareInterface::class, 'src/Application/Middleware');
+        $classes = $container->findClassesThatImplements(MiddlewareInterface::class, '/src/Application/Middleware');
         foreach ($classes as $class) {
             $definition->method('registerMiddleware', autowire($class));
         }

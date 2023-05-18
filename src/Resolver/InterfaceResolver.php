@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace TXC\Box\Resolver;
 
+use Roave\BetterReflection\BetterReflection;
+use Roave\BetterReflection\Reflector\DefaultReflector;
+use Roave\BetterReflection\SourceLocator\Type\SingleFileSourceLocator;
 use TXC\Box\Application\Cache;
 use TXC\Box\Environment\Settings;
 use Symfony\Component\Finder\Finder;
@@ -55,28 +58,16 @@ class InterfaceResolver
         $finder->files()->in($searchInDirectories)->name('*.php');
 
         $classes = [];
+        $astLocator = (new BetterReflection())->astLocator();
         foreach ($finder as $file) {
-            $class = trim(str_replace(
-                $appRoot . DIRECTORY_SEPARATOR . 'src' . DIRECTORY_SEPARATOR,
-                '',
-                $file->getRealPath()
-            ));
-            $class = 'App\\' . str_replace(
-                [DIRECTORY_SEPARATOR, '.php'],
-                ['\\', ''],
-                $class
-            );
-
-            try {
-                if (!(new \ReflectionClass($class))->implementsInterface($interfaceName)) {
-                    // Class does not implement interface.
+            $reflector = new DefaultReflector(new SingleFileSourceLocator($file->getRealPath(), $astLocator));
+            foreach ($reflector->reflectAllClasses() as $class) {
+                if (!$class->implementsInterface($interfaceName)) {
+                    // Class is not tagged with attribute.
                     continue;
                 }
-            } catch (\ReflectionException) {
-                continue;
+                $classes[] = $class->getName();
             }
-
-            $classes[] = $class;
         }
 
         return $classes;

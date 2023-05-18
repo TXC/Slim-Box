@@ -1,6 +1,7 @@
 {
     "name": "txc/slim-box",
     "description": "A bunch of PHP Slim functionality bundled to be autowired",
+    "version": "1.0.2",
     "type": "library",
     "homepage": "https://txc.se/",
     "license": "MIT",
@@ -29,7 +30,6 @@
         "php-di/slim-bridge": "^3.3",
         "psr/log": "^1.0 || ^2.0",
         "slim/php-view": "^3.1.0",
-        "slim/csrf": "^1.2.1",
         "slim/psr7": "^1.5",
         "slim/slim": "^4.10",
         "symfony/cache": "^6.1",

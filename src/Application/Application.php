@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace TXC\Box\Application;
 
+use Psr\Log\LoggerInterface;
 use TXC\Box\Controller\RoutesContainer;
 use TXC\Box\DependencyInjection\ContainerFactory;
 use TXC\Box\Environment\Environment;
@@ -25,7 +26,7 @@ final class Application
 
     public static function create(?ContainerInterface $container = null): App
     {
-        $container ?? ContainerFactory::create();
+        $container = $container ?? ContainerFactory::create();
         $app = Bridge::create($container);
 
         $application = new static($app);
@@ -56,7 +57,7 @@ final class Application
         $settings = $this->app->getContainer()->get(Settings::class);
 
         if (
-            Environment::DEV !== Environment::from($_ENV['ENVIRONMENT'])
+            Environment::DEV === Environment::from($_ENV['ENVIRONMENT'])
             && $settings->get('slim.displayErrorDetails')
         ) {
             $this->app->add(new WhoopsMiddleware());
@@ -75,7 +76,8 @@ final class Application
         $shutdownHandler = new ShutdownHandler(
             ServerRequestCreatorFactory::create()->createServerRequestFromGlobals(),
             $errorHandler,
-            $settings->get('slim.displayErrorDetails')
+            $settings->get('slim.displayErrorDetails'),
+            $this->app->getContainer()->get(LoggerInterface::class)
         );
         register_shutdown_function($shutdownHandler);
 

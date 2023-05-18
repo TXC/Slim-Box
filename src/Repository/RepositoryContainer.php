@@ -4,33 +4,33 @@ declare(strict_types=1);
 
 namespace TXC\Box\Repository;
 
-use TXC\Box\Interface\DomainInterface;
+use TXC\Box\Interface\RepositoryInterface;
 
 class RepositoryContainer
 {
-    /** @var DomainInterface[] */
-    private array $entityRegister = [];
+    /** @var RepositoryInterface[] */
+    private array $repositoryRegister = [];
 
-    public function registerEntity(DomainInterface $class): void
+    public function registerRepository(RepositoryInterface $class): void
     {
         $reflection = new \ReflectionClass($class);
 
-        if (array_key_exists($reflection->getName(), $this->getEntities())) {
+        if (array_key_exists($reflection->getName(), $this->getRepositories())) {
             throw new \RuntimeException(sprintf('Class "%s" already registered in container', $reflection->getName()));
         }
-        $this->entityRegister[$reflection->getName()] = $class;
+        $this->repositoryRegister[$reflection->getName()] = $class;
     }
 
     /**
-     * @return DomainInterface[]
+     * @return RepositoryInterface[]
      */
-    public function getEntities(): array
+    public function getRepositories(): array
     {
-        return $this->entityRegister;
+        return $this->repositoryRegister;
     }
 
-    public function getEntity(string $className): ?DomainInterface
+    public function getRepository(string $className): ?RepositoryInterface
     {
-        return $this->entityRegister[$className] ?? null;
+        return $this->repositoryRegister[$className] ?? null;
     }
 }

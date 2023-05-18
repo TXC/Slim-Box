@@ -299,7 +299,7 @@ EOT
             $envContent .= PHP_EOL;
         }
 
-        file_put_contents(__DIR__ . '/../../.env', $envContent);
+        file_put_contents(Settings::getAppRoot() . '/.env', $envContent);
     }
 
     private function clearCache(OutputInterface $output): int

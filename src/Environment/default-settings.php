@@ -27,9 +27,9 @@ return [
         //'attributes' => true,
     ],
     'logger' => [
-        'prefix' => 'app',
+        'prefix' => $_ENV['APP_NAME'] ?? 'app',
         'path' => isset($_ENV['docker']) ? 'php://stdout' :
-            $_ENV['LOG_PATH'] ?? Settings::getAppRoot() . '/var/log/app.log',
+            $_ENV['LOG_PATH'] ?? Settings::getAppRoot() . '/var/log',
         'level' => Environment::PRODUCTION !== Environment::from($_ENV['ENVIRONMENT']) ? Logger::DEBUG : Logger::NOTICE
     ],
     'amqp' => [

@@ -33,22 +33,22 @@ class Settings
 
     public static function load(): self
     {
-        $settings = require 'default-settings.php';
+        $settings = require __DIR__ . '/default-settings.php';
         if (file_exists(self::getAppRoot() . '/config/settings.php')) {
             $settings = array_merge($settings, require self::getAppRoot() . '/config/settings.php');
         }
         return new self($settings);
     }
 
-    public static function getAppRoot(): ?string
+    public static function getAppRoot(): string
     {
         //return InstalledVersions::getRootPackage()['install_path'];
-        for ($i = 2; $i < 5; $i++) {
-            if (!file_exists(dirname(__DIR__, $i) . '/.env.dist')) {
+        for ($i = 5; $i > 0; $i--) {
+            if (!file_exists(dirname(__DIR__, $i) . '/vendor/autoload.php')) {
                 continue;
             }
             return dirname(__DIR__, $i);
         }
-        return null;
+        throw new RuntimeException('vendor/autoload.php could not be found. Did you run `php composer.phar install`?');
     }
 }

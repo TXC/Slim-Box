@@ -11,6 +11,7 @@ use TXC\Box\DependencyInjection\ContainerBuilder;
 use TXC\Box\Environment\Settings;
 use TXC\Box\Interface\CompilerPass;
 use DI\Definition\Helper\AutowireDefinitionHelper;
+
 use function DI\autowire;
 
 class RoutesCompilerPass implements CompilerPass
@@ -20,12 +21,12 @@ class RoutesCompilerPass implements CompilerPass
 
     public function process(ContainerBuilder $container): void
     {
-        if (!is_dir(Settings::getAppRoot() . 'src/Application')) {
+        if (!is_dir(Settings::getAppRoot() . '/src/Application')) {
             return;
         }
         $this->container = $container;
         $this->definition = $this->container->findDefinition(RoutesContainer::class);
-        $classes = $this->container->findTaggedWithClassAttribute(IsRoutable::class, 'src/Application');
+        $classes = $this->container->findTaggedWithClassAttribute(IsRoutable::class, '/src/Application');
         $routes = [];
         foreach ($classes as $class) {
             $reflection = new \ReflectionClass($class);

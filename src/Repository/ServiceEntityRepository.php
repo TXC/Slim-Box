@@ -33,6 +33,7 @@ class ServiceEntityRepository extends EntityRepository implements RepositoryInte
      */
     public function __construct(EntityManager $entityManager, string $entityClass)
     {
-        parent::__construct($entityManager, $entityManager->getClassMetadata($entityClass));
+        $classMetaData = $entityManager->getClassMetadata($entityClass);
+        parent::__construct($entityManager, $classMetaData);
     }
 }

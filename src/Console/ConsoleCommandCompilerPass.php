@@ -24,8 +24,9 @@ class ConsoleCommandCompilerPass implements CompilerPass
     public function process(ContainerBuilder $container): void
     {
         $directoryRestriction = ['src/Commands/'];
-        if (is_dir(Settings::getAppRoot() . 'vendor/txc/slim-box')) {
-            $directoryRestriction[] = 'vendor/txc/slim-box/';
+
+        if (is_dir(Settings::getAppRoot() . '/vendor/txc/slim-box')) {
+            $directoryRestriction[] = '/vendor/txc/slim-box/';
         }
 
         $definition = $container->findDefinition(ConsoleCommandContainer::class);

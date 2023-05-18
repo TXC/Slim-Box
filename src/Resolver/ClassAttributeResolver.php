@@ -2,9 +2,13 @@
 
 namespace TXC\Box\Resolver;
 
+use Roave\BetterReflection\BetterReflection;
+use Roave\BetterReflection\Reflector\DefaultReflector;
+use Roave\BetterReflection\SourceLocator\Type\SingleFileSourceLocator;
+use Roave\BetterReflection\SourceLocator\Type\StringSourceLocator;
+use Symfony\Component\Finder\Finder;
 use TXC\Box\Application\Cache;
 use TXC\Box\Environment\Settings;
-use Symfony\Component\Finder\Finder;
 
 class ClassAttributeResolver
 {
@@ -53,28 +57,16 @@ class ClassAttributeResolver
         $finder->files()->in($searchInDirectories)->name('*.php');
 
         $classes = [];
+        $astLocator = (new BetterReflection())->astLocator();
         foreach ($finder as $file) {
-            $class = trim(str_replace(
-                $appRoot . DIRECTORY_SEPARATOR . 'src' . DIRECTORY_SEPARATOR,
-                '',
-                $file->getRealPath()
-            ));
-            $class = 'App\\' . str_replace(
-                [DIRECTORY_SEPARATOR, '.php'],
-                ['\\', ''],
-                $class
-            );
-
-            try {
-                if (!(new \ReflectionClass($class))->getAttributes($attributeClassName)) {
+            $reflector = new DefaultReflector(new SingleFileSourceLocator($file->getRealPath(), $astLocator));
+            foreach ($reflector->reflectAllClasses() as $class) {
+                if (!$class->getAttributesByName($attributeClassName)) {
                     // Class is not tagged with attribute.
                     continue;
                 }
-            } catch (\ReflectionException) {
-                continue;
+                $classes[] = $class->getName();
             }
-
-            $classes[] = $class;
         }
 
         return $classes;
