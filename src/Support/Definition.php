@@ -52,6 +52,12 @@ class Definition
         if (InstalledVersions::isInstalled('symfony/console')) {
             $packages = array_merge($packages, self::addSymfonyConsole());
         }
+        if (InstalledVersions::isInstalled('twig/twig')) {
+            $packages = array_merge($packages, self::addTwig());
+        }
+        if (InstalledVersions::isInstalled('slim/php-view')) {
+            $packages = array_merge($packages, self::addSlimPhpView());
+        }
 
         return array_merge($packages, self::addSkeleton());
     }
@@ -178,6 +184,28 @@ class Definition
                 }
                 return $application;
             },
+        ];
+    }
+
+    protected static function addTwig(): array
+    {
+        return [
+            // Twig Environment.
+            \Twig\Loader\FilesystemLoader::class => \DI\create(\Twig\Loader\FilesystemLoader::class)->constructor(
+                Settings::getAppRoot() . '/templates'
+            ),
+            \Twig\Environment::class => \DI\create(\Twig\Environment::class)->constructor(
+                \DI\get(\Twig\Loader\FilesystemLoader::class)
+            ),
+        ];
+    }
+
+    protected static function addSlimPhpView(): array
+    {
+        return [
+            \Slim\Views\PhpRenderer::class => \DI\create(\Slim\Views\PhpRenderer::class)->constructor(
+                Settings::getAppRoot() . '/templates'
+            ),
         ];
     }
 
