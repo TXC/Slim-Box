@@ -1,7 +1,6 @@
 {
     "name": "txc/slim-box",
     "description": "A bunch of PHP Slim functionality bundled to be autowired",
-    "version": "1.0.2",
     "type": "library",
     "homepage": "https://txc.se/",
     "license": "MIT",
