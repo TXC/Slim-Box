@@ -3,10 +3,10 @@
 
 declare(strict_types=1);
 
-use TXC\Box\DependencyInjection\ContainerFactory;
 use Psr\Container\ContainerInterface;
 use Symfony\Component\Console\Application;
 use Symfony\Component\Console\Input\ArgvInput;
+use TXC\Box\Infrastructure\DependencyInjection\ContainerFactory;
 
 $directory = null;
 for ($i = 5; $i > 0; $i--) {

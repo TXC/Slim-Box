@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace TXC\Box\Testing;
 
-use TXC\Box\DependencyInjection\ContainerFactory;
 use Psr\Container\ContainerInterface;
+use TXC\Box\Infrastructure\DependencyInjection\ContainerFactory;
 
 trait WithContainer
 {

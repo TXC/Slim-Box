@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-use TXC\Box\DependencyInjection\ContainerFactory;
 use Doctrine\ORM\EntityManagerInterface;
+use TXC\Box\Infrastructure\DependencyInjection\ContainerFactory;
 
 return ContainerFactory::createForTestSuite()->get(EntityManagerInterface::class);

@@ -4,14 +4,6 @@ declare(strict_types=1);
 
 namespace TXC\Box\Support;
 
-use TXC\Box\Console\ConsoleCommandContainer;
-use TXC\Box\Controller\RoutesContainer;
-use TXC\Box\Domain\DomainContainer;
-use TXC\Box\Environment\Environment;
-use TXC\Box\Environment\Settings;
-use TXC\Box\Interface\DomainInterface;
-use TXC\Box\Interface\RepositoryInterface;
-use TXC\Box\Repository\RepositoryContainer;
 use Composer\InstalledVersions;
 use DI\Factory\RequestedEntry;
 use Doctrine\DBAL;
@@ -19,16 +11,23 @@ use Doctrine\Migrations\Configuration as MigrationConfiguration;
 use Doctrine\Migrations\DependencyFactory;
 use Doctrine\ORM;
 use Doctrine\ORM\Tools\Console as ORMConsole;
+use League\Event\EventDispatcher;
 use Monolog\Handler\StreamHandler;
 use Monolog\Logger;
 use Psr\Container\ContainerInterface;
 use Psr\Http\Message\ServerRequestFactoryInterface;
 use Psr\Log\LoggerInterface;
-use TXC\Box\Interface\RestInterface;
 use Slim\Psr7\Factory\ServerRequestFactory;
 use Symfony\Component\Cache\Adapter\ArrayAdapter;
 use Symfony\Component\Cache\Adapter\FilesystemAdapter;
 use Symfony\Component\Console\Application;
+use TXC\Box\Infrastructure\CompilerPasses\Console\ConsoleCommandContainer;
+use TXC\Box\Infrastructure\CompilerPasses\Domain\DomainContainer;
+use TXC\Box\Infrastructure\CompilerPasses\Routes\RoutesContainer;
+use TXC\Box\Infrastructure\Environment\Environment;
+use TXC\Box\Infrastructure\Environment\Settings;
+use TXC\Box\Interfaces\DomainInterface;
+use TXC\Box\Interfaces\RestInterface;
 
 use function DI\get;
 
@@ -52,7 +51,9 @@ class Definition
         if (InstalledVersions::isInstalled('symfony/console')) {
             $packages = array_merge($packages, self::addSymfonyConsole());
         }
-        if (InstalledVersions::isInstalled('twig/twig')) {
+        if (InstalledVersions::isInstalled('slim/twig-view')) {
+            $packages = array_merge($packages, self::addSlimTwigView());
+        } elseif (InstalledVersions::isInstalled('twig/twig')) {
             $packages = array_merge($packages, self::addTwig());
         }
         if (InstalledVersions::isInstalled('slim/php-view')) {
@@ -187,25 +188,48 @@ class Definition
         ];
     }
 
+    protected static function addSlimTwigView(): array
+    {
+        return [
+            // Twig Environment.
+            \Twig\Loader\FilesystemLoader::class => \DI\factory(function (Settings $settings) {
+                return new \Twig\Loader\FilesystemLoader($settings->get('twig'));
+            }),
+            \Twig\Environment::class => \DI\factory(function (
+                Settings $settings,
+                \Twig\Loader\FilesystemLoader $loader
+            ) {
+                return new \Twig\Environment($loader, $settings->get('twig'));
+            }),
+            'view' => \DI\factory(function (Settings $settings) {
+                return \Slim\Views\Twig::create($settings->get('slim.template_dir'), $settings->get('twig'));
+            })
+        ];
+    }
+
     protected static function addTwig(): array
     {
         return [
             // Twig Environment.
-            \Twig\Loader\FilesystemLoader::class => \DI\create(\Twig\Loader\FilesystemLoader::class)->constructor(
-                Settings::getAppRoot() . '/templates'
-            ),
-            \Twig\Environment::class => \DI\create(\Twig\Environment::class)->constructor(
-                \DI\get(\Twig\Loader\FilesystemLoader::class)
-            ),
+            \Twig\Loader\FilesystemLoader::class => \DI\factory(function (Settings $settings) {
+                return new \Twig\Loader\FilesystemLoader($settings->get('twig'));
+            }),
+            \Twig\Environment::class => \DI\factory(function (
+                Settings $settings,
+                \Twig\Loader\FilesystemLoader $loader
+            ) {
+                return new \Twig\Environment($loader, $settings->get('twig'));
+            }),
+            'view' => \DI\get(\Twig\Environment::class),
         ];
     }
 
     protected static function addSlimPhpView(): array
     {
         return [
-            \Slim\Views\PhpRenderer::class => \DI\create(\Slim\Views\PhpRenderer::class)->constructor(
-                Settings::getAppRoot() . '/templates'
-            ),
+            \Slim\Views\PhpRenderer::class => \DI\factory(function (Settings $settings) {
+                return new \Slim\Views\PhpRenderer($settings->get('slim.template_dir'));
+            }),
         ];
     }
 
@@ -220,6 +244,7 @@ class Definition
                 return Settings::load();
             },
             ContainerInterface::class => \DI\get(\DI\Container::class),
+            //EventDispatcher::class => \DI\create(EventDispatcher::class),
 /*
             CallableResolverInterface::class => function (ContainerInterface $container) {
                 $callableResolver = new InvokerCallableResolver($container);

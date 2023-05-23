@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace TXC\Box\Testing;
 
-use TXC\Box\Application\Application;
-use TXC\Box\DependencyInjection\ContainerFactory;
 use Slim\App;
+use TXC\Box\Infrastructure\Application\Application;
+use TXC\Box\Infrastructure\DependencyInjection\ContainerFactory;
 
 trait WithApplication
 {

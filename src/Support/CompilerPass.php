@@ -5,11 +5,10 @@ declare(strict_types=1);
 namespace TXC\Box\Support;
 
 use Composer\InstalledVersions;
-use TXC\Box\Console\ConsoleCommandCompilerPass;
-use TXC\Box\Controller\RoutesCompilerPass;
-use TXC\Box\Domain\DomainCompilerPass;
-use TXC\Box\Middleware\MiddlewareCompilerPass;
-use TXC\Box\Repository\RepositoryCompilerPass;
+use TXC\Box\Infrastructure\CompilerPasses\Console\ConsoleCommandCompilerPass;
+use TXC\Box\Infrastructure\CompilerPasses\Domain\DomainCompilerPass;
+use TXC\Box\Infrastructure\CompilerPasses\Middleware\MiddlewareCompilerPass;
+use TXC\Box\Infrastructure\CompilerPasses\Routes\RoutesCompilerPass;
 
 class CompilerPass
 {

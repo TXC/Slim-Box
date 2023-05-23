@@ -13,7 +13,8 @@
     "suggest": {
         "ext-pdo_mysql": "*",
         "ext-pdo_sqlite": "*",
-        "ext-pdo_pgsql": "*"
+        "ext-pdo_pgsql": "*",
+        "slim/twig-view": "^3.3"
     },
     "require": {
         "php": "^8.2",
@@ -24,6 +25,7 @@
         "ext-pdo": "*",
         "doctrine/migrations": "^3.6",
         "doctrine/orm": "^2.12",
+        "league/event": "^3.0",
         "monolog/monolog": "^2.5",
         "php-di/php-di": "^7.0",
         "php-di/slim-bridge": "^3.3",
