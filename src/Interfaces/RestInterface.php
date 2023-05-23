@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace TXC\Box\Interfaces;
 
 use Psr\Http\Message\ResponseInterface;

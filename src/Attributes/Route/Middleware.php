@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace TXC\Box\Attribute\Route;
+namespace TXC\Box\Attributes\Route;
 
 use Psr\Http\Server\MiddlewareInterface;
 

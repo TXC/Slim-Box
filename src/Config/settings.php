@@ -135,15 +135,6 @@ return [
             'em' => null,
         ],
     ],
-    'blacklist' => [
-        'compilerpass' => [
-            'console' => [],
-            'domain' => [],
-            'middleware' => [],
-            'repository' => [],
-            'route' => [],
-        ]
-    ],
     'application' => [
     ],
 ];
