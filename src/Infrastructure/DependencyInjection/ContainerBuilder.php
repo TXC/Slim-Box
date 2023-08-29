@@ -17,14 +17,8 @@ class ContainerBuilder
 {
     /** @var CompilerPass[] */
     private array $passes = [];
-    private ?string $classAttributeCacheDir = null;
-    private ?string $interfaceCacheDir = null;
 
-    public function __construct(
-        private readonly \DI\ContainerBuilder $containerBuilder,
-        private readonly ClassAttributeResolver $classAttributeResolver,
-        private readonly InterfaceResolver $interfaceResolver
-    ) {
+    public function __construct(private readonly \DI\ContainerBuilder $containerBuilder) {
     }
 
     /**
@@ -47,20 +41,6 @@ class ContainerBuilder
             $containerClass,
             $containerParentClass,
         );
-
-        return $this;
-    }
-
-    public function enableClassAttributeCache(string $directory): self
-    {
-        $this->classAttributeCacheDir = $directory;
-
-        return $this;
-    }
-
-    public function enableInterfaceCache(string $directory): self
-    {
-        $this->interfaceCacheDir = $directory;
 
         return $this;
     }
@@ -92,22 +72,6 @@ class ContainerBuilder
         return \DI\autowire($id);
     }
 
-    /**
-     * @return string[]
-     */
-    public function findTaggedWithClassAttribute(string $name, string ...$restrictToDirectories): array
-    {
-        return $this->classAttributeResolver->resolve($name, $restrictToDirectories, $this->classAttributeCacheDir);
-    }
-
-    /**
-     * @return string[]
-     */
-    public function findClassesThatImplements(string $name, string ...$restrictToDirectories): array
-    {
-        return $this->interfaceResolver->resolve($name, $restrictToDirectories, $this->interfaceCacheDir);
-    }
-
     public function build(): Container
     {
         $settings = Settings::load();
@@ -129,10 +93,6 @@ class ContainerBuilder
 
     public static function create(): self
     {
-        return new self(
-            new \DI\ContainerBuilder(),
-            new ClassAttributeResolver(),
-            new InterfaceResolver()
-        );
+        return new self(new \DI\ContainerBuilder());
     }
 }

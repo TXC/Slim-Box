@@ -29,12 +29,15 @@ class Cache
     }
 
     /**
-     * @param string[] $classes
+     * @param string[]|\Iterator<string> $classes
      */
-    public function compile(array $classes): string
+    public function compile(array|\Iterator $classes): string
     {
         if ($this->exists()) {
             return $this->cacheFileName;
+        }
+        if (!is_array($classes) && $classes instanceof \Iterator) {
+            $classes = iterator_to_array($classes);
         }
 
         $fileContent = [

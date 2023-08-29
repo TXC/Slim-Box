@@ -8,6 +8,8 @@ use RuntimeException;
 
 class Settings
 {
+    private static ?string $appRoot = null;
+
     public function __construct(
         /** @var array<mixed> $settings */
         private readonly array $settings
@@ -35,24 +37,41 @@ class Settings
     {
         $settings = require __DIR__ . '/../../Config/settings.php';
         if (file_exists(self::getAppRoot() . '/config/settings.php')) {
-            $settings = array_merge_recursive($settings, require self::getAppRoot() . '/config/settings.php');
+            $appSettings = require self::getAppRoot() . '/config/settings.php';
+            $settings = self::arrayMergeRecursiveDistinct($settings, $appSettings);
         }
         return new self($settings);
     }
 
+    private static function arrayMergeRecursiveDistinct(array &$array1, array &$array2): array
+    {
+        $merged = $array1;
+        foreach ($array2 as $key => &$value) {
+            if (is_array($value) && isset($merged[$key]) && is_array($merged[$key])) {
+                $merged[$key] = self::arrayMergeRecursiveDistinct($merged[$key], $value);
+            } else {
+                $merged[$key] = $value;
+            }
+        }
+        return $merged;
+    }
+
     public static function getAppRoot(): string
     {
+        if (self::$appRoot) {
+            return self::$appRoot;
+        }
         if (file_exists(getcwd() . '/vendor/autoload.php')) {
-            return getcwd();
+            return self::$appRoot = getcwd();
         } elseif (file_exists(getcwd() . '/../vendor/autoload.php')) {
-            return realpath(getcwd() . '/../');
+            return self::$appRoot = realpath(getcwd() . '/../');
         }
         //return InstalledVersions::getRootPackage()['install_path'];
         for ($i = 6; $i > 0; $i--) {
             if (!file_exists(dirname(__DIR__, $i) . '/vendor/autoload.php')) {
                 continue;
             }
-            return dirname(__DIR__, $i);
+            return self::$appRoot = dirname(__DIR__, $i);
         }
         throw new RuntimeException('vendor/autoload.php could not be found. Did you run `php composer.phar install`?');
     }

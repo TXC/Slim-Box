@@ -5,39 +5,34 @@ declare(strict_types=1);
 namespace TXC\Box\Infrastructure\CompilerPasses\Routes;
 
 use DI\Definition\Helper\AutowireDefinitionHelper;
-use TXC\Box\Attribute\Route\GroupRoute;
-use TXC\Box\Attribute\Route\IsRoutable;
-use TXC\Box\Attribute\Route\Route;
+use TXC\Box\Attributes\Route\GroupRoute;
+use TXC\Box\Attributes\Route\IsRoutable;
+use TXC\Box\Attributes\Route\Route;
 use TXC\Box\Infrastructure\DependencyInjection\ContainerBuilder;
 use TXC\Box\Infrastructure\Environment\Settings;
+use TXC\Box\Infrastructure\Resolvers\ClassAttributeResolver;
 use TXC\Box\Interfaces\CompilerPass;
+
 use function DI\autowire;
 
 class RoutesCompilerPass implements CompilerPass
 {
     private AutowireDefinitionHelper $definition;
-    private ContainerBuilder $container;
 
     public function process(ContainerBuilder $container, Settings $settings): void
     {
         if (!is_dir(Settings::getAppRoot() . '/src/Application')) {
             return;
         }
-        $this->container = $container;
-        $blacklist = $settings->get('blacklist.compilerpass.route');
-        $this->definition = $this->container->findDefinition(RoutesContainer::class);
-        $classes = $this->container->findTaggedWithClassAttribute(IsRoutable::class, '/src/Application');
+        $this->definition = $container->findDefinition(RoutesContainer::class);
+        $classes = ClassAttributeResolver::resolve(IsRoutable::class, '/src/Application');
         $routes = [];
         foreach ($classes as $class) {
-            if (in_array($class, $blacklist)) {
-                continue;
-            }
             $reflection = new \ReflectionClass($class);
             $this->collectClassRoutes($reflection, $routes);
         }
 
-        //$this->registerRoutes($routes);
-        $this->container->addDefinitions([RoutesContainer::class => $this->definition]);
+        $container->addDefinitions([RoutesContainer::class => $this->definition]);
     }
 
     private function collectClassRoutes(\ReflectionClass $reflection, array &$routes): void

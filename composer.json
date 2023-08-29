@@ -26,7 +26,8 @@
         "doctrine/migrations": "^3.6",
         "doctrine/orm": "^2.12",
         "league/event": "^3.0.2",
-        "monolog/monolog": "^2.5",
+        "middlewares/debugbar": "^v2.1.0",
+        "monolog/monolog": "^3.0",
         "php-di/php-di": "^7.0",
         "php-di/slim-bridge": "^3.3",
         "psr/log": "^1.0 || ^2.0",
@@ -37,6 +38,7 @@
         "symfony/console": "^6.1",
         "symfony/finder": "^6.1",
         "vlucas/phpdotenv": "^v5.5",
+        "willdurand/negotiation": "^3.1.0",
         "zeuxisoo/slim-whoops": "0.7.*"
     },
     "require-dev": {

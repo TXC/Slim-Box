@@ -8,8 +8,13 @@ use TXC\Box\Infrastructure\Environment\Settings;
 
 return [
     'slim' => [
-        // Language to use on request
-        'locale' => 'en_US.UTF-8',
+        'encoding' => 'UTF-8',
+        // Default Language to use on request
+        'locale' => 'en_US',
+        // Available locales to choose from
+        'available_locales' => [
+            'en_US',
+        ],
         // Returns a detailed HTML page with error details and
         // a stack trace. Should be disabled in production.
         'displayErrorDetails' => !empty($_ENV['DISPLAY_ERROR_DETAILS']),
@@ -23,14 +28,18 @@ return [
         'cache_dir' => Settings::getAppRoot() . '/var/cache/slim',
         // Path where Slim template engine will locate template(s)
         'template_dir' => Settings::getAppRoot() . '/templates',
-        // PHP-DI Autowiring support, enabled by default in PHP-DI
-        //'autowiring' => true,
-        // PHP-DI Attributes support, disabled by default in PHP-DI
-        //'attributes' => true,
+        // Route settings
         'route' => [
+            // Path where Slim will cache routes
             'cache_file' => Settings::getAppRoot() . '/var/cache/slim/routes.php',
+            // Route names that don't require login
+            'public' => [
+                'root',
+                'login',
+            ],
         ]
     ],
+    'site' => [],
     'logger' => [
         'prefix' => $_ENV['APP_NAME'] ?? 'app',
         'path' => isset($_ENV['docker']) ? 'php://stdout' :
@@ -46,14 +55,12 @@ return [
             'vhost' => $_ENV['RABBITMQ_VHOST'] ?? '',
         ],
     ],
-    'blacklist' => [
-        'compilerpass' => [
-            'console' => [],
-            'domain' => [],
-            'middleware' => [],
-            'repository' => [],
-            'route' => [],
-        ],
+    'passes' => [
+        'console' => [],
+        'domain' => [],
+        'middleware' => [],
+        'repository' => [],
+        'route' => [],
     ],
     'csrf' => [
         'enabled' => true,

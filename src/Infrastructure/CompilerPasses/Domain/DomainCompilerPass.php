@@ -8,6 +8,7 @@ use Doctrine\ORM\Mapping as ORM;
 use Roave\BetterReflection\Reflection\ReflectionClass;
 use TXC\Box\Infrastructure\DependencyInjection\ContainerBuilder;
 use TXC\Box\Infrastructure\Environment\Settings;
+use TXC\Box\Infrastructure\Resolvers\ClassAttributeResolver;
 use TXC\Box\Interfaces\CompilerPass;
 use TXC\Box\Interfaces\DomainInterface;
 
@@ -19,30 +20,20 @@ class DomainCompilerPass implements CompilerPass
             return;
         }
 
-        $blacklist = $settings->get('blacklist.compilerpass.domain');
         $definition = $container->findDefinition(DomainContainer::class);
-        foreach ($this->getDomains($container, $blacklist) as $class) {
-            if (in_array($class, $blacklist)) {
-                continue;
-            }
+        foreach ($this->getDomains() as $class) {
             $definition->method('registerDomain', \DI\autowire($class->getName()));
         }
         $container->addDefinitions([DomainContainer::class => $definition]);
     }
 
     /**
-     * @param ContainerBuilder $container
-     * @param array $blacklist
-     * @return \Generator<ReflectionClass>
+     * @return iterable<ReflectionClass>
      */
-    protected function getDomains(ContainerBuilder $container, array $blacklist): \Generator
+    protected function getDomains(): iterable
     {
-        $classes = $container->findTaggedWithClassAttribute(ORM\Entity::class, '/src/Domain');
+        $classes = ClassAttributeResolver::resolve(ORM\Entity::class, '/src/Domain');
         foreach ($classes as $class) {
-            if (in_array($class, $blacklist)) {
-                continue;
-            }
-
             $reflection = ReflectionClass::createFromName($class);
             if (!$reflection->implementsInterface(DomainInterface::class)) {
                 continue;

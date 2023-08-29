@@ -12,6 +12,8 @@ use Psr\Container\ContainerInterface;
 use TXC\Box\Infrastructure\Events;
 use TXC\Box\Infrastructure\Environment\Environment;
 use TXC\Box\Infrastructure\Environment\Settings;
+use TXC\Box\Infrastructure\Resolvers\ClassAttributeResolver;
+use TXC\Box\Infrastructure\Resolvers\InterfaceResolver;
 use TXC\Box\Support\CompilerPass;
 use TXC\Box\Support\Definition;
 
@@ -24,27 +26,15 @@ class ContainerFactory
         $dotenv = Dotenv::createImmutable($appRoot, $dotEnv);
         $dotenv->load();
 
-
         // At this point the container has not been built. We need to load the settings manually.
         $settings = Settings::load();
         $containerBuilder = ContainerBuilder::create();
 
-        $dispatcher = \DI\create(EventDispatcher::class);
-        $containerBuilder->addDefinitions([EventDispatcher::class => $dispatcher]);
-
-        self::attachListeners($containerBuilder, $dispatcher);
-
         if (Environment::PRODUCTION === Environment::from($_ENV['ENVIRONMENT'])) {
             // Compile and cache container.
-            $containerBuilder->enableCompilation(
-                $settings->get('slim.cache_dir') . '/container'
-            );
-            $containerBuilder->enableClassAttributeCache(
-                $settings->get('slim.cache_dir') . '/class-attributes'
-            );
-            $containerBuilder->enableInterfaceCache(
-                $settings->get('slim.cache_dir') . '/interfaces'
-            );
+            $containerBuilder->enableCompilation($settings->get('slim.cache_dir') . '/container');
+            ClassAttributeResolver::setCacheDir($settings->get('slim.cache_dir') . '/class-attributes');
+            InterfaceResolver::setCacheDir($settings->get('slim.cache_dir') . '/interfaces');
         }
 
         $definition = Definition::collect();
@@ -61,8 +51,8 @@ class ContainerFactory
 
         $container = $containerBuilder->build();
 
-        //$dispatcher->dispatch(new Events\Event('container.ready'));
-        $dispatcher->method('dispatch', new Events\Event('container.ready'));
+        $container->get(EventDispatcher::class)
+            ->dispatch(new Events\Event('container.ready'));
 
         return $container;
     }
@@ -70,20 +60,5 @@ class ContainerFactory
     public static function createForTestSuite(): ContainerInterface
     {
         return static::create('.env.test');
-    }
-
-    //protected static function attachListeners(ContainerBuilder $container, EventDispatcher $dispatcher): void
-    protected static function attachListeners(ContainerBuilder $container, CreateDefinitionHelper $dispatcher): void
-    {
-        $directoryRestriction = ['src/'];
-        if (is_dir(Settings::getAppRoot() . '/vendor/txc/slim-box/src/Event/Subscribers')) {
-            $directoryRestriction[] = 'vendor/txc/slim-box/src/Event/Subscribers/';
-        }
-return;
-        $classes = $container->findClassesThatImplements(ListenerSubscriber::class, ...$directoryRestriction);
-        foreach ($classes as $class) {
-            //$dispatcher->subscribeListenersFrom(new $class());
-            $dispatcher->method('subscribeListenersFrom', new $class());
-        }
     }
 }

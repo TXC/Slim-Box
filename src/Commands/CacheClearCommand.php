@@ -18,7 +18,8 @@ class CacheClearCommand extends AbstractCommand
         $settings = $this->getContainer()->get(Settings::class);
         $cacheDirs = [
             $settings->get('doctrine.cache_dir'),
-            $settings->get('slim.cache_dir')
+            $settings->get('slim.cache_dir'),
+            $settings->get('twig.cache'),
         ];
         foreach ($cacheDirs as $cacheDir) {
             if (!file_exists($cacheDir)) {

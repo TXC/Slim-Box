@@ -15,7 +15,7 @@ class MiddlewareContainer
     {
         $reflection = new \ReflectionClass($class);
 
-        if (array_key_exists($reflection->getName(), $this->getMiddleware())) {
+        if (array_key_exists($reflection->getName(), $this->getMiddlewares())) {
             throw new \RuntimeException(sprintf('Class "%s" already registered in container', $reflection->getName()));
         }
         $this->middlewares[$reflection->getName()] = $class;
@@ -24,8 +24,13 @@ class MiddlewareContainer
     /**
      * @return MiddlewareInterface[]
      */
-    public function getMiddleware(): array
+    public function getMiddlewares(): array
     {
         return $this->middlewares;
+    }
+
+    public function getMiddleware(string $pattern): ?MiddlewareInterface
+    {
+        return $this->middlewares[$pattern] ?? null;
     }
 }

@@ -21,11 +21,17 @@ use Slim\Psr7\Factory\ServerRequestFactory;
 use Symfony\Component\Cache\Adapter\ArrayAdapter;
 use Symfony\Component\Cache\Adapter\FilesystemAdapter;
 use Symfony\Component\Console\Application;
+use Symfony\Component\Translation;
 use TXC\Box\Infrastructure\CompilerPasses\Console\ConsoleCommandContainer;
 use TXC\Box\Infrastructure\CompilerPasses\Domain\DomainContainer;
+use TXC\Box\Infrastructure\CompilerPasses\EventListeners\EventListenerContainer;
 use TXC\Box\Infrastructure\CompilerPasses\Routes\RoutesContainer;
+use TXC\Box\Infrastructure\CompilerPasses\Twig\ExtensionContainer;
+use TXC\Box\Infrastructure\CompilerPasses\Twig\RuntimeLoaderContainer;
+use TXC\Box\Infrastructure\CompilerPasses\Twig\TranslateResourcesContainer;
 use TXC\Box\Infrastructure\Environment\Environment;
 use TXC\Box\Infrastructure\Environment\Settings;
+use TXC\Box\Infrastructure\Events;
 use TXC\Box\Interfaces\DomainInterface;
 use TXC\Box\Interfaces\RestInterface;
 
@@ -53,8 +59,6 @@ class Definition
         }
         if (InstalledVersions::isInstalled('slim/twig-view')) {
             $packages = array_merge($packages, self::addSlimTwigView());
-        } elseif (InstalledVersions::isInstalled('twig/twig')) {
-            $packages = array_merge($packages, self::addTwig());
         }
         if (InstalledVersions::isInstalled('slim/php-view')) {
             $packages = array_merge($packages, self::addSlimPhpView());
@@ -192,35 +196,54 @@ class Definition
     {
         return [
             // Twig Environment.
-            \Twig\Loader\FilesystemLoader::class => \DI\factory(function (Settings $settings) {
-                return new \Twig\Loader\FilesystemLoader($settings->get('twig'));
+            \Twig\Loader\LoaderInterface::class => \DI\factory(function () {
+                /** @var \Slim\Views\Twig $twig */
+                $twig = \DI\get('view');
+                return $twig->getLoader();
             }),
             \Twig\Environment::class => \DI\factory(function (
                 Settings $settings,
                 \Twig\Loader\FilesystemLoader $loader
             ) {
-                return new \Twig\Environment($loader, $settings->get('twig'));
+                /** @var \Slim\Views\Twig $twig */
+                $twig = \DI\get('view');
+                return $twig->getEnvironment();
             }),
-            'view' => \DI\factory(function (Settings $settings) {
-                return \Slim\Views\Twig::create($settings->get('slim.template_dir'), $settings->get('twig'));
-            })
-        ];
-    }
+            \Symfony\Contracts\Translation\TranslatorInterface::class => function (
+                Settings $settings,
+                TranslateResourcesContainer $resourcesContainer
+            ) {
+                $translator = new Translation\Translator(
+                    $settings->get('slim.locale'),
+                    new Translation\Formatter\MessageFormatter(new Translation\IdentityTranslator()),
+                    $settings->get('slim.cache_dir'),
+                );
+                $translator->addLoader('mo', new Translation\Loader\MoFileLoader());
+                foreach ($resourcesContainer->getTranslations() as $locale => $path) {
+                    $translator->addResource('mo', $path, $locale, 'messages');
+                }
 
-    protected static function addTwig(): array
-    {
-        return [
-            // Twig Environment.
-            \Twig\Loader\FilesystemLoader::class => \DI\factory(function (Settings $settings) {
-                return new \Twig\Loader\FilesystemLoader($settings->get('twig'));
+                return $translator;
+            },
+            \Slim\Views\Twig::class => \DI\factory(function (Settings $settings) {
+                return \Slim\Views\Twig::create(
+                    $settings->get('slim.template_dir'),
+                    $settings->get('twig')
+                );
             }),
-            \Twig\Environment::class => \DI\factory(function (
-                Settings $settings,
-                \Twig\Loader\FilesystemLoader $loader
+            'view' => \DI\factory(function (
+                \Slim\Views\Twig $twig,
+                ExtensionContainer $extensionContainer,
+                RuntimeLoaderContainer $runtimeLoaderContainer
             ) {
-                return new \Twig\Environment($loader, $settings->get('twig'));
+                foreach ($extensionContainer->getExtensions() as $extension) {
+                    $twig->addExtension($extension);
+                }
+                foreach ($runtimeLoaderContainer->getRuntimeLoaders() as $runtime) {
+                    $twig->addRuntimeLoader($runtime);
+                }
+                return $twig;
             }),
-            'view' => \DI\get(\Twig\Environment::class),
         ];
     }
 
@@ -244,7 +267,17 @@ class Definition
                 return Settings::load();
             },
             ContainerInterface::class => \DI\get(\DI\Container::class),
-            //EventDispatcher::class => \DI\create(EventDispatcher::class),
+            EventDispatcher::class => function (EventListenerContainer $eventListenerContainer) {
+                $dispatcher = new EventDispatcher();
+                foreach ($eventListenerContainer->getListeners() as $class) {
+                    $dispatcher->subscribeListenersFrom($class);
+                }
+                return $dispatcher;
+            },
+            /*
+            \League\Event\Listener::class => function (RequestedEntry $entry) {
+                return \DI\autowire($entry->getName());
+            },
 /*
             CallableResolverInterface::class => function (ContainerInterface $container) {
                 $callableResolver = new InvokerCallableResolver($container);

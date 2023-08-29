@@ -19,9 +19,8 @@ class RepositoryCompilerPass extends DomainCompilerPass implements CompilerPass
             return;
         }
 
-        $blacklist = $settings->get('blacklist.compilerpass.repository');
         $definition = $container->findDefinition(RepositoryContainer::class);
-        foreach ($this->getDomains($container, $blacklist) as $domain) {
+        foreach ($this->getDomains() as $domain) {
             foreach ($domain->getAttributesByName(ORM\Entity::class) as $classAttribute) {
                 foreach ($classAttribute->getArguments() as $param => $value) {
                     if ($param != 'repositoryClass') {

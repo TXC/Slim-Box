@@ -15,26 +15,23 @@ use Doctrine\ORM\Tools\Console\EntityManagerProvider\SingleManagerProvider;
 use Symfony\Component\Console\Attribute\AsCommand;
 use TXC\Box\Infrastructure\DependencyInjection\ContainerBuilder;
 use TXC\Box\Infrastructure\Environment\Settings;
+use TXC\Box\Infrastructure\Resolvers\ClassAttributeResolver;
 use TXC\Box\Interfaces\CompilerPass;
+
 use function DI\autowire;
 
 class ConsoleCommandCompilerPass implements CompilerPass
 {
     public function process(ContainerBuilder $container, Settings $settings): void
     {
-        $directoryRestriction = ['src/Commands/'];
+        $directoryRestriction = [
+            'src/Commands/',
+            'vendor/txc/slim-box/src/Commands/'
+        ];
 
-        if (is_dir(Settings::getAppRoot() . '/vendor/txc/slim-box')) {
-            $directoryRestriction[] = '/vendor/txc/slim-box/';
-        }
-
-        $blacklist = $settings->get('blacklist.compilerpass.console');
         $definition = $container->findDefinition(ConsoleCommandContainer::class);
-        $classes = $container->findTaggedWithClassAttribute(AsCommand::class, ...$directoryRestriction);
+        $classes = ClassAttributeResolver::resolve(AsCommand::class, ...$directoryRestriction);
         foreach ($classes as $class) {
-            if (in_array($class, $blacklist)) {
-                continue;
-            }
             $definition->method('registerCommand', autowire($class));
         }
 
@@ -49,7 +46,7 @@ class ConsoleCommandCompilerPass implements CompilerPass
     {
         $dependencyFactory = \DI\factory(function (
             \TXC\Box\Infrastructure\Environment\Settings $settings,
-            ORM\EntityManager                            $entityManager
+            ORM\EntityManager $entityManager
         ) {
             return Migrations\DependencyFactory::fromEntityManager(
                 new Migrations\Configuration\Migration\ConfigurationArray($settings->get('doctrine.migrations')),
