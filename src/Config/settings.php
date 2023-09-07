@@ -42,8 +42,8 @@ return [
     'site' => [],
     'logger' => [
         'prefix' => getenv('APP_NAME') ?: 'app',
-        'path' => getenv('docker') !== false ? 'php://stdout' :
-            getenv('LOG_PATH') ?: Settings::getAppRoot() . '/var/log',
+        'path' => (getenv('docker') !== false ? 'php://stdout' :
+            (getenv('LOG_PATH') ?: Settings::getAppRoot() . '/var/log')),
         'level' => Environment::PRODUCTION !== Environment::from(getenv('ENVIRONMENT')) ? Logger::DEBUG : Logger::NOTICE
     ],
     'amqp' => [
