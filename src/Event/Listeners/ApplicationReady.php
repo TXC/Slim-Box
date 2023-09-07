@@ -26,9 +26,22 @@ class ApplicationReady implements \League\Event\Listener
     public function __invoke(object $event): void
     {
         $app = $this->container->get(App::class);
-        $this->resolveRoutePasses($app);
-        $this->addErrorHandlingMiddleware($app);
+        // 
+        // !! Middlewares are LIFO (Last In, First Out) !!
+        // 
+
         $this->resolveMiddleware($app);
+        $this->resolveRouteConfig($app);
+        //$this->resolveRoutePasses($app);
+
+        // Add Body Parsing Middleware
+        $app->addBodyParsingMiddleware();
+
+        // Add Routing Middleware
+        $app->addRoutingMiddleware();
+
+
+        $this->addErrorHandlingMiddleware($app);
     }
 
     public function resolveRoutePasses(App $app): void
@@ -37,10 +50,14 @@ class ApplicationReady implements \League\Event\Listener
         foreach ($routesContainer->getRoutes() as $route) {
             $route->addTo($app);
         }
+    }
 
+    public function resolveRouteConfig(App $app): void
+    {
         // Register routes
         if (file_exists(Settings::getAppRoot() . '/config/routes.php')) {
-            (require $appRoot = Settings::getAppRoot() . '/config/routes.php')($app);
+            $routes = require $appRoot = Settings::getAppRoot() . '/config/routes.php';
+            $routes($app);
         }
     }
 
@@ -52,7 +69,8 @@ class ApplicationReady implements \League\Event\Listener
             Environment::DEV === Environment::from($_ENV['ENVIRONMENT'])
             && $settings->get('slim.displayErrorDetails')
         ) {
-            $app->add(new WhoopsMiddleware());
+            $app->add(new \TXC\Box\Middlewares\WhoopsMiddleware());
+            //$app->add(new WhoopsMiddleware());
             return;
         }
 
@@ -72,25 +90,19 @@ class ApplicationReady implements \League\Event\Listener
             $app->getContainer()->get(LoggerInterface::class)
         );
         register_shutdown_function($shutdownHandler);
+        return;
     }
 
     private function resolveMiddleware(App $app): void
     {
-        // Add Body Parsing Middleware
-        $app->addBodyParsingMiddleware();
-
-        // Add Routing Middleware
-        $app->addRoutingMiddleware();
-
         $settings = $this->container->get(Settings::class);
-        $allowedMiddleware = $settings->get('passes.middleware');
         $middlewareContainer = $this->container->get(MiddlewareContainer::class);
-        foreach ($middlewareContainer->getMiddlewares() as $middleware) {
-            if (!empty($allowedMiddleware) && !in_array($middleware, $allowedMiddleware)) {
-                continue;
-            }
-            $app->add($middleware);
+
+        $allowedMiddleware = $settings->get('passes.middleware');
+        foreach ($allowedMiddleware as $middleware) {
+            $app->add($middlewareContainer->getMiddleware($middleware));
         }
-        (require $appRoot = Settings::getAppRoot() . '/config/middleware.php')($app);
+        $middleware = require $appRoot = Settings::getAppRoot() . '/config/middleware.php';
+        $middleware($app);
     }
 }

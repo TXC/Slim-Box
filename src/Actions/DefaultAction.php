@@ -29,8 +29,10 @@ abstract class DefaultAction
     {
         $this->container = $container;
         $this->logger = $container->get(LoggerInterface::class);
-        $this->entityManager = $container->get(EntityManagerInterface::class);
         $this->settings = $container->get(Settings::class);
+        if ($this->settings->get('doctrine')) {
+            $this->entityManager = $container->get(EntityManagerInterface::class);
+        }
     }
 
     protected function getContainer(): ContainerInterface
@@ -38,14 +40,20 @@ abstract class DefaultAction
         return $this->container;
     }
 
-    protected function getEntityManager(): EntityManagerInterface
+    protected function getEntityManager(): ?EntityManagerInterface
     {
-        return $this->entityManager;
+        if ($this->settings->get('doctrine')) {
+            return $this->entityManager;
+        }
+        return null;
     }
 
-    protected function getRepository(string $repositoryName): EntityRepository
+    protected function getRepository(string $repositoryName): ?EntityRepository
     {
-        return $this->getEntityManager()->getRepository($repositoryName);
+        if ($this->settings->get('doctrine')) {
+            return $this->getEntityManager()->getRepository($repositoryName);
+        }
+        return null;
     }
 
     /**

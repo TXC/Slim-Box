@@ -37,17 +37,17 @@ class ContainerFactory
             InterfaceResolver::setCacheDir($settings->get('slim.cache_dir') . '/interfaces');
         }
 
-        $definition = Definition::collect();
-        if (file_exists($appRoot . '/config/container.php')) {
-            $definition = array_merge($definition, require $appRoot . '/config/container.php');
-        }
-        $containerBuilder->addDefinitions($definition);
-
         $compilerPasses = CompilerPass::collect();
         if (file_exists($appRoot . '/config/compiler-passes.php')) {
             $compilerPasses = array_merge($compilerPasses, require $appRoot . '/config/compiler-passes.php');
         }
         $containerBuilder->addCompilerPasses(...$compilerPasses);
+
+        $definition = Definition::collect();
+        if (file_exists($appRoot . '/config/container.php')) {
+            $definition = array_merge($definition, require $appRoot . '/config/container.php');
+        }
+        $containerBuilder->addDefinitions($definition);
 
         $container = $containerBuilder->build();
 

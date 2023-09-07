@@ -21,9 +21,13 @@ class MiddlewareCompilerPass implements CompilerPass
             'vendor/txc/slim-box/src/Middlewares',
         ];
 
+        $allowedMiddleware = $settings->get('passes.middleware');
         $definition = $container->findDefinition(MiddlewareContainer::class);
         $classes = InterfaceResolver::resolve(MiddlewareInterface::class, ...$searchDirectory);
         foreach ($classes as $class) {
+            if (!in_array($class, $allowedMiddleware)) {
+                continue;
+            }
             $definition->method('registerMiddleware', autowire($class));
         }
 

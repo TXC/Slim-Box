@@ -8,17 +8,24 @@ use Symfony\Component\Console\Application;
 use Symfony\Component\Console\Input\ArgvInput;
 use TXC\Box\Infrastructure\DependencyInjection\ContainerFactory;
 
-$directory = null;
-for ($i = 5; $i > 0; $i--) {
-    if (!file_exists(dirname(__DIR__, $i) . '/vendor/autoload.php')) {
-        continue;
+if (isset($GLOBALS['_composer_autoload_path'])) {
+    echo realpath($GLOBALS['_composer_autoload_path']) . PHP_EOL;
+    require_once realpath($GLOBALS['_composer_autoload_path']);
+} else {
+    $directory = null;
+    for ($i = 5; $i > 0; $i--) {
+        echo dirname(__DIR__, $i) . '/vendor/autoload.php' . PHP_EOL;
+        if (!file_exists(dirname(__DIR__, $i) . '/vendor/autoload.php')) {
+            continue;
+        }
+        $directory = dirname(__DIR__, $i);
     }
-    $directory = dirname(__DIR__, $i);
+    if (empty($directory)) {
+        throw new RuntimeException('vendor/autoload.php could not be found. Did you run `php composer.phar install`?');
+    }
+    var_dump($directory);
+    require_once $directory . '/vendor/autoload.php';
 }
-if (empty($directory)) {
-    throw new RuntimeException('vendor/autoload.php could not be found. Did you run `php composer.phar install`?');
-}
-require_once $directory . '/vendor/autoload.php';
 
 $env = (new ArgvInput())->getParameterOption(['--env', '-e'], 'dev');
 

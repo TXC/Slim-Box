@@ -35,9 +35,12 @@ class LoginMiddleware implements MiddlewareInterface
             throw new HttpNotFoundException($request);
         }
 
-        if (empty($_SESSION['user']) && (!in_array($route->getName(), $this->settings->get('slim.route.public')))) {
+        if (
+            empty($_SESSION['user'])
+            && (!in_array($route->getName(), $this->settings->get('slim.route.public')))
+        ) {
             $routeParser = $routeContext->getRouteParser();
-            $url = $routeParser->urlFor('root');
+            $url = $routeParser->urlFor($this->settings->get('slim.route.redirect_to'));
 
             $response = new \Slim\Psr7\Response();
             return $response->withHeader('Location', $url)->withStatus(302);

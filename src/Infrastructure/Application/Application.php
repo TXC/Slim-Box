@@ -19,8 +19,14 @@ final class Application
     {
         $container = $container ?? ContainerFactory::create();
         $app = Bridge::create($container);
+        unset($container);
+        $container = $app->getContainer();
 
-        $container->get(EventDispatcher::class)->dispatch(new Events\Event('application.ready'));
+        //$app->get(EventDispatcher::class)->dispatch(new Events\Event('application.ready'));
+        
+        $dispatcher = $container->get(EventDispatcher::class);
+        $dispatcher->dispatch(new Events\Event('application.ready'));
+
 
         if (Environment::PRODUCTION === Environment::from($_ENV['ENVIRONMENT'])) {
             /**

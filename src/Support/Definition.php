@@ -41,17 +41,18 @@ class Definition
 {
     public static function collect(): array
     {
+        $settings = Settings::load();
         $packages = [];
-        if (InstalledVersions::isInstalled('monolog/monolog')) {
+        if (InstalledVersions::isInstalled('monolog/monolog') && $settings->get('logger')) {
             $packages = array_merge($packages, self::addMonolog());
         }
-        if (InstalledVersions::isInstalled('doctrine/dbal')) {
+        if (InstalledVersions::isInstalled('doctrine/dbal') && $settings->get('doctrine')) {
             $packages = array_merge($packages, self::addDoctrineDbal());
         }
-        if (InstalledVersions::isInstalled('doctrine/orm')) {
+        if (InstalledVersions::isInstalled('doctrine/orm') && $settings->get('doctrine')) {
             $packages = array_merge($packages, self::addDoctrineOrm());
         }
-        if (InstalledVersions::isInstalled('doctrine/migrations')) {
+        if (InstalledVersions::isInstalled('doctrine/migrations') && $settings->get('doctrine')) {
             $packages = array_merge($packages, self::addDoctrineMigrations());
         }
         if (InstalledVersions::isInstalled('symfony/console')) {
@@ -74,6 +75,8 @@ class Definition
                 $name = $settings->get('logger.prefix');
 
                 $logger = new Logger($name);
+
+                $logger->pushProcessor(new \Monolog\Processor\PsrLogMessageProcessor());
 
                 $fileHandler = new StreamHandler(
                     $settings->get('logger.path') . '/' . $name . '.log',
@@ -194,7 +197,7 @@ class Definition
 
     protected static function addSlimTwigView(): array
     {
-        return [
+        $definitions = [
             // Twig Environment.
             \Twig\Loader\LoaderInterface::class => \DI\factory(function () {
                 /** @var \Slim\Views\Twig $twig */
@@ -208,23 +211,30 @@ class Definition
                 /** @var \Slim\Views\Twig $twig */
                 $twig = \DI\get('view');
                 return $twig->getEnvironment();
-            }),
-            \Symfony\Contracts\Translation\TranslatorInterface::class => function (
-                Settings $settings,
-                TranslateResourcesContainer $resourcesContainer
-            ) {
-                $translator = new Translation\Translator(
-                    $settings->get('slim.locale'),
-                    new Translation\Formatter\MessageFormatter(new Translation\IdentityTranslator()),
-                    $settings->get('slim.cache_dir'),
-                );
-                $translator->addLoader('mo', new Translation\Loader\MoFileLoader());
-                foreach ($resourcesContainer->getTranslations() as $locale => $path) {
-                    $translator->addResource('mo', $path, $locale, 'messages');
-                }
+            })
+        ];
 
-                return $translator;
-            },
+        if (InstalledVersions::isInstalled('symfony/translation')) {
+            $definitions = array_merge($definitions, [
+                \Symfony\Contracts\Translation\TranslatorInterface::class => function (
+                    Settings $settings,
+                    TranslateResourcesContainer $resourcesContainer
+                ) {
+                    $translator = new Translation\Translator(
+                        $settings->get('slim.locale'),
+                        new Translation\Formatter\MessageFormatter(new Translation\IdentityTranslator()),
+                        $settings->get('slim.cache_dir'),
+                    );
+                    $translator->addLoader('mo', new Translation\Loader\MoFileLoader());
+                    foreach ($resourcesContainer->getTranslations() as $locale => $path) {
+                        $translator->addResource('mo', $path, $locale, 'messages');
+                    }
+
+                    return $translator;
+                }
+            ]);
+        }
+        return array_merge($definitions, [
             \Slim\Views\Twig::class => \DI\factory(function (Settings $settings) {
                 return \Slim\Views\Twig::create(
                     $settings->get('slim.template_dir'),
@@ -244,7 +254,7 @@ class Definition
                 }
                 return $twig;
             }),
-        ];
+        ]);
     }
 
     protected static function addSlimPhpView(): array
@@ -304,9 +314,9 @@ class Definition
             //    $repository = $repositoryContainer->getRepository($name);
             //    return $repository;
             //},
-            RestInterface::class => function (RoutesContainer $routesContainer, RequestedEntry $entry) {
-                return $routesContainer->getRoute($entry->getName());
-            },
+            //RestInterface::class => function (RoutesContainer $routesContainer, RequestedEntry $entry) {
+            //    return $routesContainer->getRoute($entry->getName());
+            //},
             ServerRequestFactoryInterface::class => \DI\get(ServerRequestFactory::class),
         ];
     }

@@ -62,6 +62,9 @@ return [
         'repository' => [],
         'route' => [],
     ],
+    'cors' => [
+        'origin' => 'https://example.com',
+    ],
     'csrf' => [
         'enabled' => true,
         'prefix' => 'dope',
@@ -92,7 +95,7 @@ return [
         'timeout' => $_ENV['REDIS_TIMEOUT'] ?? 2.5,
     ],
     'twig' => [
-        'debug' => false,
+        'debug' => Environment::DEV === Environment::from($_ENV['ENVIRONMENT']),
         'charset' => 'UTF-8',
         'cache' => Settings::getAppRoot() . '/var/cache/views'
     ],
