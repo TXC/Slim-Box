@@ -66,7 +66,7 @@ class ApplicationReady implements \League\Event\Listener
         $settings = $this->container->get(Settings::class);
 
         if (
-            Environment::DEV === Environment::from($_ENV['ENVIRONMENT'])
+            Environment::DEV === Environment::from(getenv('ENVIRONMENT'))
             && $settings->get('slim.displayErrorDetails')
         ) {
             $app->add(new \TXC\Box\Middlewares\WhoopsMiddleware());

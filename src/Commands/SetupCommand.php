@@ -118,7 +118,7 @@ EOT
 
         $environmentChoices = array_map(fn($val) => $val->value, Environment::cases());
         $environment = $input->getOption('environment');
-        if (empty($environment) && empty($_ENV['ENVIRONMENT'])) {
+        if (empty($environment) && getenv('ENVIRONMENT') === false) {
             $environment = $this->io->choice(
                 'What environment are we using?',
                 $environmentChoices,
@@ -127,9 +127,9 @@ EOT
             $input->setOption('environment', $environment);
         } elseif (empty($environment) && !empty($config['environment'])) {
             $input->setOption('environment', $config['environment']);
-        } elseif (!empty($_ENV['ENVIRONMENT'])) {
-            if (in_array($_ENV['ENVIRONMENT'], $environmentChoices)) {
-                $input->setOption('environment', $_ENV['ENVIRONMENT']);
+        } elseif (getenv('ENVIRONMENT') !== false) {
+            if (in_array(getenv('ENVIRONMENT'), $environmentChoices)) {
+                $input->setOption('environment', getenv('ENVIRONMENT'));
             }
         } else {
             throw new \RuntimeException('Missing ENVIRONMENT!');

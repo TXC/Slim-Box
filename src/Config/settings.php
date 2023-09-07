@@ -17,13 +17,13 @@ return [
         ],
         // Returns a detailed HTML page with error details and
         // a stack trace. Should be disabled in production.
-        'displayErrorDetails' => !empty($_ENV['DISPLAY_ERROR_DETAILS']),
+        'displayErrorDetails' => !empty(getenv('DISPLAY_ERROR_DETAILS')),
         // Whether to display errors on the internal PHP log or not.
-        'logErrors' => !empty($_ENV['LOG_ERRORS']),
+        'logErrors' => !empty(getenv('LOG_ERRORS')),
         // If true, display full errors with message and stack trace on the PHP log.
         // If false, display only "Slim Application Error" on the PHP log.
         // Doesn't do anything when 'logErrors' is false.
-        'logErrorDetails' => !empty($_ENV['LOG_ERROR_DETAILS']),
+        'logErrorDetails' => !empty(getenv('LOG_ERROR_DETAILS')),
         // Path where Slim will cache the container, compiler passes, ...
         'cache_dir' => Settings::getAppRoot() . '/var/cache/slim',
         // Path where Slim template engine will locate template(s)
@@ -41,18 +41,18 @@ return [
     ],
     'site' => [],
     'logger' => [
-        'prefix' => $_ENV['APP_NAME'] ?? 'app',
-        'path' => isset($_ENV['docker']) ? 'php://stdout' :
-            $_ENV['LOG_PATH'] ?? Settings::getAppRoot() . '/var/log',
-        'level' => Environment::PRODUCTION !== Environment::from($_ENV['ENVIRONMENT']) ? Logger::DEBUG : Logger::NOTICE
+        'prefix' => getenv('APP_NAME') ?: 'app',
+        'path' => getenv('docker') !== false ? 'php://stdout' :
+            getenv('LOG_PATH') ?: Settings::getAppRoot() . '/var/log',
+        'level' => Environment::PRODUCTION !== Environment::from(getenv('ENVIRONMENT')) ? Logger::DEBUG : Logger::NOTICE
     ],
     'amqp' => [
         'rabbitmq' => [
-            'host' => $_ENV['RABBITMQ_HOST'] ?? '',
-            'port' => $_ENV['RABBITMQ_PORT'] ?? '',
-            'username' => $_ENV['RABBITMQ_USER'] ?? '',
-            'password' => $_ENV['RABBITMQ_PASS'] ?? '',
-            'vhost' => $_ENV['RABBITMQ_VHOST'] ?? '',
+            'host' => getenv('RABBITMQ_HOST') ?: '',
+            'port' => getenv('RABBITMQ_PORT') ?: '',
+            'username' => getenv('RABBITMQ_USER') ?: '',
+            'password' => getenv('RABBITMQ_PASS') ?: '',
+            'vhost' => getenv('RABBITMQ_VHOST') ?: '',
         ],
     ],
     'passes' => [
@@ -83,26 +83,26 @@ return [
         ],
     ],
     'limit' => [
-        'requests' => $_ENV['LIMIT_REQUEST'] ?? 600,
-        'period' => $_ENV['LIMIT_PERIOD'] ?? 60,
-        'fallback' => $_ENV['LIMIT_FALLBACK'] ?? true,
+        'requests' => getenv('LIMIT_REQUEST') ?: 600,
+        'period' => getenv('LIMIT_PERIOD') ?: 60,
+        'fallback' => getenv('LIMIT_FALLBACK') ?: true,
     ],
     'redis' => [
-        'host' => $_ENV['REDIS_HOST'] ?? '127.0.0.1',
-        'port' => $_ENV['REDIS_PORT'] ?? 6379,
-        'username' => $_ENV['REDIS_USER'] ?? null,
-        'password' => $_ENV['REDIS_PASS'] ?? null,
-        'timeout' => $_ENV['REDIS_TIMEOUT'] ?? 2.5,
+        'host' => getenv('REDIS_HOST') ?: '127.0.0.1',
+        'port' => getenv('REDIS_PORT') ?: 6379,
+        'username' => getenv('REDIS_USER') ?: null,
+        'password' => getenv('REDIS_PASS') ?: null,
+        'timeout' => getenv('REDIS_TIMEOUT') ?: 2.5,
     ],
     'twig' => [
-        'debug' => Environment::DEV === Environment::from($_ENV['ENVIRONMENT']),
+        'debug' => Environment::DEV === Environment::from(getenv('ENVIRONMENT')),
         'charset' => 'UTF-8',
         'cache' => Settings::getAppRoot() . '/var/cache/views'
     ],
     'doctrine' => [
         // Enables or disables Doctrine metadata caching
         // for either performance or convenience during development.
-        'dev_mode' => Environment::PRODUCTION !== Environment::from($_ENV['ENVIRONMENT']),
+        'dev_mode' => Environment::PRODUCTION !== Environment::from(getenv('ENVIRONMENT')),
         // Path where Doctrine will cache the processed metadata
         // when 'dev_mode' is false.
         'cache_dir' => Settings::getAppRoot() . '/var/cache/doctrine',
@@ -117,14 +117,14 @@ return [
         // of valid parameters:
         // @see https://www.doctrine-project.org/projects/doctrine-dbal/en/current/reference/configuration.html
         'connection' => [
-            'driver' => $_ENV['DATABASE_DRIVER'] ?? '',
-            'host' => $_ENV['DATABASE_HOST'] ?? '',
-            'port' => $_ENV['DATABASE_PORT'] ?? '',
-            'dbname' => $_ENV['DATABASE_NAME'] ?? '',
-            'user' => $_ENV['DATABASE_USER'] ?? '',
-            'password' => $_ENV['DATABASE_PASSWORD'] ?? '',
-            'path' => isset($_ENV['DATABASE_PATH']) ? Settings::getAppRoot() . $_ENV['DATABASE_PATH'] : '',
-            'charset' => $_ENV['DATABASE_CHARSET'] ?? 'utf8mb4',
+            'driver' => getenv('DATABASE_DRIVER') ?: '',
+            'host' => getenv('DATABASE_HOST') ?: '',
+            'port' => getenv('DATABASE_PORT') ?: '',
+            'dbname' => getenv('DATABASE_NAME') ?: '',
+            'user' => getenv('DATABASE_USER') ?: '',
+            'password' => getenv('DATABASE_PASSWORD') ?: '',
+            'path' => getenv('DATABASE_PATH') ? Settings::getAppRoot() . getenv('DATABASE_PATH') : '',
+            'charset' => getenv('DATABASE_CHARSET') ?: 'utf8mb4',
         ],
         'migrations' => [
             'table_storage' => [

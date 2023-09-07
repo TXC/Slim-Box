@@ -30,7 +30,7 @@ class ContainerFactory
         $settings = Settings::load();
         $containerBuilder = ContainerBuilder::create();
 
-        if (Environment::PRODUCTION === Environment::from($_ENV['ENVIRONMENT'])) {
+        if (Environment::PRODUCTION === Environment::from(getenv('ENVIRONMENT'))) {
             // Compile and cache container.
             $containerBuilder->enableCompilation($settings->get('slim.cache_dir') . '/container');
             ClassAttributeResolver::setCacheDir($settings->get('slim.cache_dir') . '/class-attributes');
