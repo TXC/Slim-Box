@@ -66,7 +66,7 @@ class ApplicationReady implements \League\Event\Listener
         $settings = $this->container->get(Settings::class);
 
         if (
-            Environment::DEV === Environment::from(getenv('ENVIRONMENT'))
+            Environment::DEV === Environment::from($_ENV['APP_ENV'])
             && $settings->get('slim.displayErrorDetails')
         ) {
             $app->add(new \TXC\Box\Middlewares\WhoopsMiddleware());
@@ -100,7 +100,10 @@ class ApplicationReady implements \League\Event\Listener
 
         $allowedMiddleware = $settings->get('passes.middleware');
         foreach ($allowedMiddleware as $middleware) {
-            $app->add($middlewareContainer->getMiddleware($middleware));
+            $middleware = $middlewareContainer->getMiddleware($middleware);
+            if (!empty($middleware)) {
+                $app->add($middleware);
+            }
         }
         $middleware = require $appRoot = Settings::getAppRoot() . '/config/middleware.php';
         $middleware($app);

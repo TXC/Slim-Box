@@ -270,7 +270,7 @@ class Definition
     {
         return [
             Environment::class => function () {
-                return Environment::from(getenv('ENVIRONMENT'));
+                return Environment::from($_ENV['APP_ENV']);
             },
             // Settings.
             Settings::class => function (): Settings {

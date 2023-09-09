@@ -61,10 +61,12 @@ class Settings
         if (self::$appRoot) {
             return self::$appRoot;
         }
-        if (file_exists(getcwd() . '/vendor/autoload.php')) {
+        if (isset($GLOBALS['_composer_autoload_path'])) {
+            return self::$appRoot = realpath(dirname($GLOBALS['_composer_autoload_path']) . '/..');
+        } elseif (file_exists(getcwd() . '/vendor/autoload.php')) {
             return self::$appRoot = getcwd();
         } elseif (file_exists(getcwd() . '/../vendor/autoload.php')) {
-            return self::$appRoot = realpath(getcwd() . '/../');
+            return self::$appRoot = realpath(getcwd() . '/..');
         }
         //return InstalledVersions::getRootPackage()['install_path'];
         for ($i = 6; $i > 0; $i--) {

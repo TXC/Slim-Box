@@ -9,10 +9,18 @@ use Faker\Generator;
 
 trait WithFaker
 {
-    protected Generator $faker;
+    protected static Generator $faker;
 
-    protected function setUpFaker(string $locale = Factory::DEFAULT_LOCALE): void
+    public static function setUpFaker(string $locale = Factory::DEFAULT_LOCALE): void
     {
-        $this->faker = Factory::create($locale);
+        self::$faker = Factory::create($locale);
+    }
+
+    public static function getFaker(): Generator
+    {
+        if (empty(self::$faker)) {
+            self::setUpFaker();
+        }
+        return self::$faker;
     }
 }

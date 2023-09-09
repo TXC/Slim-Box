@@ -11,7 +11,7 @@ trait WithContainer
 {
     private static ?ContainerInterface $container = null;
 
-    protected function bootContainer(): ContainerInterface
+    protected static function bootContainer(): ContainerInterface
     {
         if (!self::$container) {
             self::$container = ContainerFactory::createForTestSuite();
@@ -20,10 +20,10 @@ trait WithContainer
         return self::$container;
     }
 
-    protected function getContainer(): ContainerInterface
+    protected static function getContainer(): ContainerInterface
     {
         if (!self::$container) {
-            $this->bootContainer();
+            self::bootContainer();
         }
 
         return self::$container;

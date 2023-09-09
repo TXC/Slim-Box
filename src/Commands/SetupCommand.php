@@ -118,7 +118,7 @@ EOT
 
         $environmentChoices = array_map(fn($val) => $val->value, Environment::cases());
         $environment = $input->getOption('environment');
-        if (empty($environment) && getenv('ENVIRONMENT') === false) {
+        if (empty($environment) && empty($_ENV['APP_ENV'])) {
             $environment = $this->io->choice(
                 'What environment are we using?',
                 $environmentChoices,
@@ -127,9 +127,9 @@ EOT
             $input->setOption('environment', $environment);
         } elseif (empty($environment) && !empty($config['environment'])) {
             $input->setOption('environment', $config['environment']);
-        } elseif (getenv('ENVIRONMENT') !== false) {
-            if (in_array(getenv('ENVIRONMENT'), $environmentChoices)) {
-                $input->setOption('environment', getenv('ENVIRONMENT'));
+        } elseif (!empty($_ENV['APP_ENV'])) {
+            if (in_array($_ENV['APP_ENV'], $environmentChoices)) {
+                $input->setOption('environment', $_ENV['APP_ENV']);
             }
         } else {
             throw new \RuntimeException('Missing ENVIRONMENT!');
@@ -275,7 +275,7 @@ EOT
         $options = $input->getOptions();
 
         $variables = [
-            'environment' => 'ENVIRONMENT=%s',
+            'environment' => 'APP_ENV=%s',
             'error_details' => 'DISPLAY_ERROR_DETAILS=%d',
             'log_error' => 'LOG_ERRORS=%d',
             'log_error_details' => 'LOG_ERROR_DETAILS=%d',
@@ -394,7 +394,7 @@ EOT
         }
 
         return [
-            'environment' => $config['ENVIRONMENT'] ?? 'dev',
+            'environment' => $config['APP_ENV'] ?? 'dev',
             'error_details' => $config['DISPLAY_ERROR_DETAILS'] ?? '0',
             'log_error' => $config['LOG_ERRORS'] ?? '0',
             'log_error_details' => $config['LOG_ERROR_DETAILS'] ?? '0',

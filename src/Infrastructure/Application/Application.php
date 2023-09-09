@@ -28,7 +28,7 @@ final class Application
         $dispatcher->dispatch(new Events\Event('application.ready'));
 
 
-        if (Environment::PRODUCTION === Environment::from(getenv('ENVIRONMENT'))) {
+        if (Environment::PRODUCTION === Environment::from($_ENV['APP_ENV']) {
             /**
              * To generate the route cache data, you need to set the file to one that does not exist in a writable
              * directory.
