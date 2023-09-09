@@ -2,7 +2,6 @@
 
 declare(strict_types=1);
 
-use Monolog\Logger;
 use TXC\Box\Infrastructure\Environment\Environment;
 use TXC\Box\Infrastructure\Environment\Settings;
 
@@ -44,7 +43,7 @@ return [
         'prefix' => $_ENV['APP_NAME'] ?? 'app',
         'path' => (!empty($_ENV['docker']) ? 'php://stdout' :
             ($_ENV['LOG_PATH'] ?: Settings::getAppRoot() . '/var/log')),
-        'level' => Environment::PRODUCTION !== Environment::from($_ENV['APP_ENV']) ? Logger::DEBUG : Logger::NOTICE
+        'level' => !empty($_ENV['APP_ENV']) && Environment::PRODUCTION !== Environment::from($_ENV['APP_ENV']) ? \Monolog\Level::Debug : \Monolog\Level::Notice
     ],
     'amqp' => [
         'rabbitmq' => [

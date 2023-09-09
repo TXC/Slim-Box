@@ -30,7 +30,7 @@
         "monolog/monolog": "^3.0",
         "php-di/php-di": "^7.0",
         "php-di/slim-bridge": "^3.3",
-        "psr/log": "^1.0 || ^2.0",
+        "psr/log": "^2.0 || ^3.0",
         "roave/better-reflection": "^6.10",
         "slim/php-view": "^3.1.0",
         "slim/psr7": "^1.5",
