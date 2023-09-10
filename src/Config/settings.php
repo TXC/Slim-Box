@@ -42,7 +42,7 @@ return [
     'logger' => [
         'prefix' => $_ENV['APP_NAME'] ?? 'app',
         'path' => (!empty($_ENV['docker']) ? 'php://stdout' :
-            ($_ENV['LOG_PATH'] ?: Settings::getAppRoot() . '/var/log')),
+            ($_ENV['LOG_PATH'] ?? Settings::getAppRoot() . '/var/log')),
         'level' => !empty($_ENV['APP_ENV']) && Environment::PRODUCTION !== Environment::from($_ENV['APP_ENV']) ? \Monolog\Level::Debug : \Monolog\Level::Notice
     ],
     'amqp' => [
