@@ -6,6 +6,7 @@ namespace TXC\Box\Commands;
 
 use Composer\InstalledVersions;
 use Dotenv\Dotenv;
+use League\Event\EventDispatcher;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Completion\CompletionInput;
 use Symfony\Component\Console\Input\ArrayInput;
@@ -15,6 +16,7 @@ use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use TXC\Box\Infrastructure\Environment\Environment;
 use TXC\Box\Infrastructure\Environment\Settings;
+use TXC\Box\Infrastructure\Events;
 
 #[AsCommand(name: 'app:setup', description: 'Setup the application')]
 class SetupCommand extends AbstractCommand
@@ -266,6 +268,10 @@ EOT
         }
 
         $this->runCommands($output);
+
+        $this->getContainer()
+             ->get(EventDispatcher::class)
+             ->dispatch(new Events\Event('setup.complete'));
 
         return self::SUCCESS;
     }
