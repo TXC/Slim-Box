@@ -350,9 +350,12 @@ EOT
                     $arguments = array_merge($arguments, $command[1]);
                 }
 
+                $arrayInput = new ArrayInput($arguments);
+                $arrayInput->setInteractive(false);
+
                 $res = $this->getApplication()
                     ->find($command)
-                    ->run(new ArrayInput($arguments), $output);
+                    ->run($arrayInput, $output);
                 if ($res !== self::SUCCESS) {
                     throw new \UnexpectedValueException('Unexpected return code', $res);
                 }
