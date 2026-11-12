@@ -24,7 +24,7 @@
         "ext-openssl": "*",
         "ext-pdo": "*",
         "doctrine/migrations": "^3.6",
-        "doctrine/orm": "^2.12",
+        "doctrine/orm": "^3.0",
         "league/event": "^3.0.2",
         "middlewares/debugbar": "^v2.1.0",
         "monolog/monolog": "^3.0",
